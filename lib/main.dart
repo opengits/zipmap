@@ -1,23 +1,8 @@
-// ZIP Code Map App (Mock Implementation)
-//
-// This Flutter application provides a mock implementation for demonstration purposes, showcasing
-// the potential functionality for real-world scenarios. Currently, it utilizes hardcoded ZIP code
-// boundaries and OpenStreetMap tiles for visualization on the map. However, this implementation can
-// be easily replaced with dynamic data fetching from APIs to obtain accurate ZIP code coordinates
-// and boundary information. Additionally, future enhancements could include features such as entering
-// a ZIP code to automatically fetch and display the corresponding area, thereby providing a more
-// interactive and dynamic user experience.
-//
-// Features:
-// - Display a map interface with selectable ZIP codes
-// - Users can choose a ZIP code from a dropdown menu
-// - Selected ZIP code boundaries are displayed on the map
-// - Ability for users to draw polygons on the map to define custom areas of interest
-// by tapping anywhere on the map
 import 'package:flutter/material.dart';
 
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'dart:convert';
 
 void main() {
   runApp(MyApp());
@@ -27,7 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ZIP Code Map App',
+      title: 'ZIP Code Map',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -43,7 +28,931 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  String selectedZipCode = "94102"; // Default ZIP code
+  MapController mapController = MapController();
+  List<List<LatLng>> zipCodeAreas = []; // Store coordinates of zip code area
+
+
+@override
+  void initState() {
+    super.initState();
+    // Sample GeoJSON data for the zip code area it can be modified accordance to your requirement
+    String geoJsonData = '''
+  {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+            [
+              -149.924005,
+              61.209269,
+              0
+            ],
+            [
+              -149.924970502414,
+              61.2086944782665,
+              0
+            ],
+            [
+              -149.917252,
+              61.203455,
+              0
+            ],
+            [
+              -149.91289,
+              61.203013,
+              0
+            ],
+            [
+              -149.908078,
+              61.203463,
+              0
+            ],
+            [
+              -149.898304,
+              61.205017,
+              0
+            ],
+            [
+              -149.892641,
+              61.203792,
+              0
+            ],
+            [
+              -149.885454,
+              61.203363,
+              0
+            ],
+            [
+              -149.882401,
+              61.203625,
+              0
+            ],
+            [
+              -149.880872,
+              61.202976,
+              0
+            ],
+            [
+              -149.87638,
+              61.202574,
+              0
+            ],
+            [
+              -149.873866,
+              61.202806,
+              0
+            ],
+            [
+              -149.871498,
+              61.201594,
+              0
+            ],
+            [
+              -149.868155,
+              61.201586,
+              0
+            ],
+            [
+              -149.859852,
+              61.201035,
+              0
+            ],
+            [
+              -149.853925,
+              61.201399,
+              0
+            ],
+            [
+              -149.849855,
+              61.202079,
+              0
+            ],
+            [
+              -149.845543,
+              61.20156,
+              0
+            ],
+            [
+              -149.843387,
+              61.200507,
+              0
+            ],
+            [
+              -149.838266,
+              61.199606,
+              0
+            ],
+            [
+              -149.838283,
+              61.207705,
+              0
+            ],
+            [
+              -149.83549,
+              61.20784,
+              0
+            ],
+            [
+              -149.8308,
+              61.20959,
+              0
+            ],
+            [
+              -149.828925,
+              61.21148,
+              0
+            ],
+            [
+              -149.823335,
+              61.211128,
+              0
+            ],
+            [
+              -149.823364,
+              61.213332,
+              0
+            ],
+            [
+              -149.826556,
+              61.217472,
+              0
+            ],
+            [
+              -149.821574,
+              61.217762,
+              0
+            ],
+            [
+              -149.808425,
+              61.221019,
+              0
+            ],
+            [
+              -149.80839,
+              61.224151,
+              0
+            ],
+            [
+              -149.815299,
+              61.223715,
+              0
+            ],
+            [
+              -149.815865,
+              61.225059,
+              0
+            ],
+            [
+              -149.819619,
+              61.225062,
+              0
+            ],
+            [
+              -149.819617,
+              61.224155,
+              0
+            ],
+            [
+              -149.823363,
+              61.224154,
+              0
+            ],
+            [
+              -149.823279,
+              61.227775,
+              0
+            ],
+            [
+              -149.815877,
+              61.227768,
+              0
+            ],
+            [
+              -149.81579,
+              61.231324,
+              0
+            ],
+            [
+              -149.793528,
+              61.231341,
+              0
+            ],
+            [
+              -149.793295,
+              61.224191,
+              0
+            ],
+            [
+              -149.786114,
+              61.224495,
+              0
+            ],
+            [
+              -149.778423,
+              61.224642,
+              0
+            ],
+            [
+              -149.778358,
+              61.237142,
+              0
+            ],
+            [
+              -149.779685,
+              61.240383,
+              0
+            ],
+            [
+              -149.784205,
+              61.240567,
+              0
+            ],
+            [
+              -149.784207,
+              61.241133,
+              0
+            ],
+            [
+              -149.784022,
+              61.241783,
+              0
+            ],
+            [
+              -149.784376,
+              61.242023,
+              0
+            ],
+            [
+              -149.785959,
+              61.242599,
+              0
+            ],
+            [
+              -149.786503,
+              61.24249,
+              0
+            ],
+            [
+              -149.786955,
+              61.241707,
+              0
+            ],
+            [
+              -149.787169,
+              61.240332,
+              0
+            ],
+            [
+              -149.790595,
+              61.240006,
+              0
+            ],
+            [
+              -149.793592,
+              61.239348,
+              0
+            ],
+            [
+              -149.799992,
+              61.23974,
+              0
+            ],
+            [
+              -149.816813,
+              61.23826,
+              0
+            ],
+            [
+              -149.823334,
+              61.234866,
+              0
+            ],
+            [
+              -149.827117,
+              61.234123,
+              0
+            ],
+            [
+              -149.831245,
+              61.232323,
+              0
+            ],
+            [
+              -149.834818,
+              61.232327,
+              0
+            ],
+            [
+              -149.838013,
+              61.230336,
+              0
+            ],
+            [
+              -149.843849,
+              61.229015,
+              0
+            ],
+            [
+              -149.850039,
+              61.228278,
+              0
+            ],
+            [
+              -149.853335,
+              61.2287,
+              0
+            ],
+            [
+              -149.853299,
+              61.231396,
+              0
+            ],
+            [
+              -149.860759,
+              61.231393,
+              0
+            ],
+            [
+              -149.862161,
+              61.22989,
+              0
+            ],
+            [
+              -149.872178,
+              61.231227,
+              0
+            ],
+            [
+              -149.871627,
+              61.232784,
+              0
+            ],
+            [
+              -149.878407,
+              61.235659,
+              0
+            ],
+            [
+              -149.879277,
+              61.235956,
+              0
+            ],
+            [
+              -149.87907,
+              61.236129,
+              0
+            ],
+            [
+              -149.878848,
+              61.236502,
+              0
+            ],
+            [
+              -149.878841,
+              61.238297,
+              0
+            ],
+            [
+              -149.880541,
+              61.244666,
+              0
+            ],
+            [
+              -149.880492,
+              61.246127,
+              0
+            ],
+            [
+              -149.88657,
+              61.246164,
+              0
+            ],
+            [
+              -149.885976,
+              61.244048,
+              0
+            ],
+            [
+              -149.889658134034,
+              61.238627046023,
+              0
+            ],
+            [
+              -149.889802935601,
+              61.2384138645854,
+              0
+            ],
+            [
+              -149.891014,
+              61.233259,
+              0
+            ],
+            [
+              -149.894006,
+              61.231611,
+              0
+            ],
+            [
+              -149.896907,
+              61.228549,
+              0
+            ],
+            [
+              -149.895125,
+              61.227569,
+              0
+            ],
+            [
+              -149.903098579723,
+              61.2278024665893,
+              0
+            ],
+            [
+              -149.906487774135,
+              61.2260806692099,
+              0
+            ],
+            [
+              -149.907367,
+              61.225634,
+              0
+            ],
+            [
+              -149.907073452484,
+              61.2254068911015,
+              0
+            ],
+            [
+              -149.906560605415,
+              61.225010116723,
+              0
+            ],
+            [
+              -149.90404,
+              61.22306,
+              0
+            ],
+            [
+              -149.902376,
+              61.2214,
+              0
+            ],
+            [
+              -149.908912,
+              61.217853,
+              0
+            ],
+            [
+              -149.912708130304,
+              61.2158844945707,
+              0
+            ],
+            [
+              -149.91290085457,
+              61.2157845562826,
+              0
+            ],
+            [
+              -149.922816,
+              61.210643,
+              0
+            ],
+            [
+              -149.924005,
+              61.209269,
+              0
+            ]
+          ]
+            ]
+          },
+          "properties": {
+            "name": "99501",
+            "ZCTA5CE10": "99501",
+            "AFFGEOID10": "8600000US99501",
+            "GEOID10": "99501",
+            "ALAND10": "17977355",
+            "AWATER10": "457591"
+          },
+          "id": "cb_2018_us_zcta510_500k.kml"
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+             [
+            [
+              -150.07348,
+              61.158341,
+              0
+            ],
+            [
+              -150.074575,
+              61.156282,
+              0
+            ],
+            [
+              -150.072211754386,
+              61.1538988723959,
+              0
+            ],
+            [
+              -150.07196,
+              61.153645,
+              0
+            ],
+            [
+              -150.065646,
+              61.151079,
+              0
+            ],
+            [
+              -150.057451910066,
+              61.1494269610214,
+              0
+            ],
+            [
+              -150.051639,
+              61.148255,
+              0
+            ],
+            [
+              -150.025019,
+              61.142635,
+              0
+            ],
+            [
+              -150.011992001765,
+              61.140663177921,
+              0
+            ],
+            [
+              -150.004935,
+              61.139595,
+              0
+            ],
+            [
+              -149.983425,
+              61.135407,
+              0
+            ],
+            [
+              -149.969164,
+              61.132538,
+              0
+            ],
+            [
+              -149.96401487616,
+              61.1295161498929,
+              0
+            ],
+            [
+              -149.962399,
+              61.130501,
+              0
+            ],
+            [
+              -149.960273,
+              61.129377,
+              0
+            ],
+            [
+              -149.956484,
+              61.130334,
+              0
+            ],
+            [
+              -149.951177,
+              61.130715,
+              0
+            ],
+            [
+              -149.945117,
+              61.132708,
+              0
+            ],
+            [
+              -149.943779,
+              61.133752,
+              0
+            ],
+            [
+              -149.938616,
+              61.132706,
+              0
+            ],
+            [
+              -149.930559,
+              61.132175,
+              0
+            ],
+            [
+              -149.925896,
+              61.133517,
+              0
+            ],
+            [
+              -149.92458,
+              61.137486,
+              0
+            ],
+            [
+              -149.921976,
+              61.137485,
+              0
+            ],
+            [
+              -149.92134,
+              61.13937,
+              0
+            ],
+            [
+              -149.914518,
+              61.139378,
+              0
+            ],
+            [
+              -149.913873,
+              61.138614,
+              0
+            ],
+            [
+              -149.908404,
+              61.140192,
+              0
+            ],
+            [
+              -149.908033,
+              61.14257,
+              0
+            ],
+            [
+              -149.908668,
+              61.152813,
+              0
+            ],
+            [
+              -149.913513,
+              61.1605,
+              0
+            ],
+            [
+              -149.917013,
+              61.170839,
+              0
+            ],
+            [
+              -149.917197,
+              61.172534,
+              0
+            ],
+            [
+              -149.923423,
+              61.172445,
+              0
+            ],
+            [
+              -149.927816,
+              61.173227,
+              0
+            ],
+            [
+              -149.934013,
+              61.173723,
+              0
+            ],
+            [
+              -149.935095,
+              61.175172,
+              0
+            ],
+            [
+              -149.936542,
+              61.173941,
+              0
+            ],
+            [
+              -149.943615,
+              61.174178,
+              0
+            ],
+            [
+              -149.943554,
+              61.176187,
+              0
+            ],
+            [
+              -149.944883,
+              61.176739,
+              0
+            ],
+            [
+              -149.949588,
+              61.176816,
+              0
+            ],
+            [
+              -149.954069,
+              61.177848,
+              0
+            ],
+            [
+              -149.95799,
+              61.179612,
+              0
+            ],
+            [
+              -149.957807,
+              61.188058,
+              0
+            ],
+            [
+              -149.965684,
+              61.187806,
+              0
+            ],
+            [
+              -149.965615,
+              61.189844,
+              0
+            ],
+            [
+              -149.968347,
+              61.189746,
+              0
+            ],
+            [
+              -149.968296,
+              61.190813,
+              0
+            ],
+            [
+              -149.970339,
+              61.18794,
+              0
+            ],
+            [
+              -149.971726,
+              61.192062,
+              0
+            ],
+            [
+              -149.970305,
+              61.195283,
+              0
+            ],
+            [
+              -149.967741,
+              61.195283,
+              0
+            ],
+            [
+              -149.963685031487,
+              61.2004914397442,
+              0
+            ],
+            [
+              -149.968332,
+              61.199881,
+              0
+            ],
+            [
+              -149.97059,
+              61.199194,
+              0
+            ],
+            [
+              -149.975462,
+              61.199366,
+              0
+            ],
+            [
+              -149.984375,
+              61.198793,
+              0
+            ],
+            [
+              -149.991981,
+              61.199595,
+              0
+            ],
+            [
+              -150.000737325626,
+              61.2015656608119,
+              0
+            ],
+            [
+              -150.009941,
+              61.203637,
+              0
+            ],
+            [
+              -150.016106,
+              61.20406,
+              0
+            ],
+            [
+              -150.019552,
+              61.203717,
+              0
+            ],
+            [
+              -150.020875103565,
+              61.2030086510051,
+              0
+            ],
+            [
+              -150.022761,
+              61.201999,
+              0
+            ],
+            [
+              -150.024391,
+              61.200708,
+              0
+            ],
+            [
+              -150.02585,
+              61.198851,
+              0
+            ],
+            [
+              -150.026801,
+              61.195644,
+              0
+            ],
+            [
+              -150.02799,
+              61.190949,
+              0
+            ],
+            [
+              -150.029178,
+              61.186252,
+              0
+            ],
+            [
+              -150.029891,
+              61.182644,
+              0
+            ],
+            [
+              -150.033456,
+              61.179779,
+              0
+            ],
+            [
+              -150.040111,
+              61.177545,
+              0
+            ],
+            [
+              -150.049881,
+              61.173548,
+              0
+            ],
+            [
+              -150.066494,
+              61.165683,
+              0
+            ],
+            [
+              -150.069108,
+              61.163735,
+              0
+            ],
+            [
+              -150.07348,
+              61.158341,
+              0
+            ]
+          ]
+            ]
+          }
+        }
+      ]
+    }          
+      
+    ''';
+    Map<String, dynamic> geoJson = json.decode(geoJsonData);
+    List<dynamic> features = geoJson['features'];
+    for (var feature in features) {
+      List<dynamic> coordinates = feature['geometry']['coordinates'][0];
+      List<LatLng> polygonCoordinates = [];
+      coordinates.forEach((coord) {
+        polygonCoordinates.add(LatLng(coord[1], coord[0]));
+      });
+      zipCodeAreas.add(polygonCoordinates);
+    }
+  }
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -51,113 +960,30 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(
         title: Text('ZIP Code Map'),
       ),
-      body: Column(
-        children: [
-          DropdownButton<String>(
-            value: selectedZipCode,
-            onChanged: (String? newValue) {
-              setState(() {
-                selectedZipCode = newValue!;
-              });
-            },
-            items: <String>['94102', '94103', '94104', '94105'] // Example ZIP codes
-                .map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text('ZIP Code: $value'),
-              );
-            }).toList(),
-          ),
-          Expanded(
-            child: MapWidget(selectedZipCode: selectedZipCode),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class MapWidget extends StatefulWidget {
-  final String selectedZipCode;
-
-  MapWidget({required this.selectedZipCode});
-
-  @override
-  _MapWidgetState createState() => _MapWidgetState();
-}
-
-class _MapWidgetState extends State<MapWidget> {
-
-  final MapController mapController = MapController();
-  List<LatLng> points = [];
-  @override
-  Widget build(BuildContext context) {
-    List<Polygon> polygons = []; // List to hold polygons of selected ZIP code
-
-    // Logic to fetch polygons of the selected ZIP code
-    if (widget.selectedZipCode == "94102") { // Example ZIP code (San Francisco, CA)
-      polygons.add(
-        Polygon(
-          points: [
-            LatLng(37.7749, -122.4194),
-            LatLng(37.7749, -122.4312),
-            LatLng(37.7816, -122.4312),
-            LatLng(37.7816, -122.4194),
-          ],
-          color: Colors.blue.withOpacity(0.5), // Set boundary color
-          borderColor: Colors.blue, // Set border color
-          borderStrokeWidth: 2, // Set border width
-        ),
-      );
-    }
-     if  (widget.selectedZipCode == "94103"){
- polygons.add(
-        Polygon(
-          points: [
-            LatLng(37.7749, -122.4194),
-            LatLng(37.7649, -122.4312),
-            LatLng(37.7816, -122.4312),
-            LatLng(37.7816, -122.4194),
-          ],
-          color: Colors.blue.withOpacity(0.5), // Set boundary color
-          borderColor: Colors.blue, // Set border color
-          borderStrokeWidth: 2, // Set border width
-        ),
-      );
-
-    }
-
-
-    return FlutterMap(
+      body: FlutterMap(
+      mapController: mapController,
       options: MapOptions(
-        center: LatLng(37.7749, -122.4194), // Default center coordinates
-        zoom: 13.0, // Default zoom level
-        onTap: _handleTap,
+       center: LatLng(61.2067, -149.8089), // Center coordinates of the area
+       zoom: 12.0,
       ),
       children: [
         TileLayer(
           urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
           subdomains: ['a', 'b', 'c'],
         ),
-        PolygonLayer(
-          polygons: polygons, // Display selected ZIP code's boundaries
-        ),
+        
          PolygonLayer(
-            polygons: [
-              Polygon(
-                points: points,
-                color: Colors.green.withOpacity(0.5),
-                borderColor: Colors.green,
-                borderStrokeWidth: 2,
-              ),
-            ],
+            polygons: zipCodeAreas.map((area) {
+              return Polygon(
+                points: area,
+                color: Colors.blue.withOpacity(0.3), // Fill color for zip code area
+                borderColor: Colors.blue, // Border color for zip code area
+                borderStrokeWidth: 2, // Border width for zip code area
+              );
+            }).toList(),
           ),
       ],
+    )
     );
   }
-   void _handleTap(TapPosition tapPosition, LatLng latLng) {
-  setState(() {
-    points.add(latLng);
-  });
-}
 }
